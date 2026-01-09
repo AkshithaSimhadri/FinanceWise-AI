@@ -1,0 +1,579 @@
+{
+  "entities": {
+    "UserProfile": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "UserProfile",
+      "type": "object",
+      "description": "Represents a user's profile within the FinanceWise AI application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the UserProfile entity."
+        },
+        "firstName": {
+          "type": "string",
+          "description": "User's first name."
+        },
+        "lastName": {
+          "type": "string",
+          "description": "User's last name."
+        },
+        "email": {
+          "type": "string",
+          "description": "User's email address.",
+          "format": "email"
+        },
+        "registrationDate": {
+          "type": "string",
+          "description": "Date and time the user registered.",
+          "format": "date-time"
+        },
+        "phone": {
+          "type": "string",
+          "description": "User's phone number."
+        },
+        "dob": {
+          "type": "string",
+          "description": "User's date of birth.",
+          "format": "date"
+        },
+        "address": {
+          "type": "object",
+          "description": "User's physical address.",
+          "properties": {
+            "street": { "type": "string" },
+            "city": { "type": "string" },
+            "state": { "type": "string" },
+            "zip": { "type": "string" }
+          }
+        },
+        "bio": {
+            "type": "string",
+            "description": "A short bio or financial summary for the user."
+        }
+      },
+      "required": [
+        "id",
+        "firstName",
+        "lastName",
+        "email",
+        "registrationDate"
+      ]
+    },
+    "Expense": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Expense",
+      "type": "object",
+      "description": "Represents an expense record for a user.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Expense entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to UserProfile. (Relationship: UserProfile 1:N Expense)"
+        },
+        "date": {
+          "type": "string",
+          "description": "Date of the expense.",
+          "format": "date-time"
+        },
+        "amount": {
+          "type": "number",
+          "description": "Amount of the expense."
+        },
+        "category": {
+          "type": "string",
+          "description": "Category of the expense (e.g., Food, Travel, Bills)."
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the expense."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "date",
+        "amount",
+        "category"
+      ]
+    },
+    "Income": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Income",
+      "type": "object",
+      "description": "Represents an income record for a user.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Income entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to UserProfile. (Relationship: UserProfile 1:N Income)"
+        },
+        "date": {
+          "type": "string",
+          "description": "Date of the income.",
+          "format": "date-time"
+        },
+        "amount": {
+          "type": "number",
+          "description": "Amount of the income."
+        },
+        "source": {
+          "type": "string",
+          "description": "Source of the income (e.g., Salary, Investment)."
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the income."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "date",
+        "amount",
+        "source"
+      ]
+    },
+    "Budget": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Budget",
+      "type": "object",
+      "description": "Represents a user's budget settings.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Budget entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to UserProfile. (Relationship: UserProfile 1:N Budget)"
+        },
+        "category": {
+          "type": "string",
+          "description": "Category for the budget (e.g., Food, Travel)."
+        },
+        "amount": {
+          "type": "number",
+          "description": "Budgeted amount for the category."
+        },
+        "startDate": {
+          "type": "string",
+          "description": "Start date of the budget period.",
+          "format": "date-time"
+        },
+        "endDate": {
+          "type": "string",
+          "description": "End date of the budget period.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "category",
+        "amount",
+        "startDate",
+        "endDate"
+      ]
+    },
+    "FinancialGoal": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "FinancialGoal",
+      "type": "object",
+      "description": "Represents a user's financial goal (e.g., emergency fund, down payment).",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the FinancialGoal entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to UserProfile. (Relationship: UserProfile 1:N FinancialGoal)"
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the financial goal."
+        },
+        "targetAmount": {
+          "type": "number",
+          "description": "Target amount for the financial goal."
+        },
+        "currentAmount": {
+          "type": "number",
+          "description": "Current amount saved towards the goal."
+        },
+        "targetDate": {
+          "type": "string",
+          "description": "Target completion date for the goal.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "name",
+        "targetAmount",
+        "currentAmount",
+        "targetDate"
+      ]
+    },
+    "InvestmentSuggestion": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "InvestmentSuggestion",
+      "type": "object",
+      "description": "Represents an investment suggestion for a user.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the InvestmentSuggestion entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to UserProfile. (Relationship: UserProfile 1:N InvestmentSuggestion)"
+        },
+        "type": {
+          "type": "string",
+          "description": "Type of investment (e.g., Stocks, Bonds, Mutual Funds)."
+        },
+        "description": {
+          "type": "string",
+          "description": "Detailed description of the investment suggestion."
+        },
+        "riskLevel": {
+          "type": "string",
+          "description": "Risk level associated with the investment (e.g., High, Medium, Low)."
+        },
+        "expectedReturn": {
+          "type": "number",
+          "description": "Expected return on investment (percentage)."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "type",
+        "description",
+        "riskLevel",
+        "expectedReturn"
+      ]
+    },
+    "LoanSuggestion": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "LoanSuggestion",
+      "type": "object",
+      "description": "Represents a loan suggestion for a user.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the LoanSuggestion entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to UserProfile. (Relationship: UserProfile 1:N LoanSuggestion)"
+        },
+        "type": {
+          "type": "string",
+          "description": "Type of loan (e.g., Personal Loan, Mortgage)."
+        },
+        "description": {
+          "type": "string",
+          "description": "Detailed description of the loan suggestion."
+        },
+        "interestRate": {
+          "type": "number",
+          "description": "Interest rate for the loan."
+        },
+        "termLength": {
+          "type": "number",
+          "description": "Loan term length in months."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "type",
+        "description",
+        "interestRate",
+        "termLength"
+      ]
+    },
+    "BusinessStrategy": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "BusinessStrategy",
+      "type": "object",
+      "description": "Represents a business strategy suggestion for a user.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the BusinessStrategy entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to UserProfile. (Relationship: UserProfile 1:N BusinessStrategy)"
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the business strategy."
+        },
+        "description": {
+          "type": "string",
+          "description": "Detailed description of the business strategy."
+        },
+        "riskLevel": {
+          "type": "string",
+          "description": "Risk level associated with the business strategy (e.g., High, Medium, Low)."
+        },
+        "potentialReturn": {
+          "type": "number",
+          "description": "Potential return from implementing the business strategy (percentage)."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "name",
+        "description",
+        "riskLevel",
+        "potentialReturn"
+      ]
+    },
+    "UploadHistory": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "UploadHistory",
+      "type": "object",
+      "description": "Represents a record of a file upload.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the UploadHistory entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to UserProfile. (Relationship: UserProfile 1:N UploadHistory)"
+        },
+        "fileName": {
+          "type": "string",
+          "description": "The name of the uploaded file."
+        },
+        "uploadDate": {
+          "type": "string",
+          "description": "Date and time of the upload.",
+          "format": "date-time"
+        },
+        "fileType": {
+          "type": "string",
+          "enum": ["pdf", "csv"],
+          "description": "The type of the uploaded file."
+        },
+        "transactionCount": {
+          "type": "number",
+          "description": "The number of transactions extracted from the file."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "fileName",
+        "uploadDate",
+        "fileType",
+        "transactionCount"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous",
+      "google.com"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "UserProfile",
+          "schema": {
+            "$ref": "#/backend/entities/UserProfile"
+          },
+          "description": "Stores user profile information. Path-based ownership enables simple security rules based on `request.auth.uid == userId`.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user, corresponding to their Firebase Auth UID."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/expenses/{expenseId}",
+        "definition": {
+          "entityName": "Expense",
+          "schema": {
+            "$ref": "#/backend/entities/Expense"
+          },
+          "description": "Stores expense records for a user. `userId` is denormalized, enforcing path-based ownership and enabling Authorization Independence. The `userId` field in the Expense document MUST match the `userId` in the path.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user, corresponding to their Firebase Auth UID."
+            },
+            {
+              "name": "expenseId",
+              "description": "The unique identifier for the expense record."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/incomes/{incomeId}",
+        "definition": {
+          "entityName": "Income",
+          "schema": {
+            "$ref": "#/backend/entities/Income"
+          },
+          "description": "Stores income records for a user. `userId` is denormalized, enforcing path-based ownership and enabling Authorization Independence. The `userId` field in the Income document MUST match the `userId` in the path.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user, corresponding to their Firebase Auth UID."
+            },
+            {
+              "name": "incomeId",
+              "description": "The unique identifier for the income record."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/budgets/{budgetId}",
+        "definition": {
+          "entityName": "Budget",
+          "schema": {
+            "$ref": "#/backend/entities/Budget"
+          },
+          "description": "Stores budget settings for a user. `userId` is denormalized, enforcing path-based ownership and enabling Authorization Independence. The `userId` field in the Budget document MUST match the `userId` in the path.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user, corresponding to their Firebase Auth UID."
+            },
+            {
+              "name": "budgetId",
+              "description": "The unique identifier for the budget record."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/financial_goals/{financialGoalId}",
+        "definition": {
+          "entityName": "FinancialGoal",
+          "schema": {
+            "$ref": "#/backend/entities/FinancialGoal"
+          },
+          "description": "Stores financial goals for a user. `userId` is denormalized, enforcing path-based ownership and enabling Authorization Independence. The `userId` field in the FinancialGoal document MUST match the `userId` in the path.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user, corresponding to their Firebase Auth UID."
+            },
+            {
+              "name": "financialGoalId",
+              "description": "The unique identifier for the financial goal record."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/investment_suggestions/{investmentSuggestionId}",
+        "definition": {
+          "entityName": "InvestmentSuggestion",
+          "schema": {
+            "$ref": "#/backend/entities/InvestmentSuggestion"
+          },
+          "description": "Stores investment suggestions for a user. `userId` is denormalized, enforcing path-based ownership and enabling Authorization Independence. The `userId` field in the InvestmentSuggestion document MUST match the `userId` in the path.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user, corresponding to their Firebase Auth UID."
+            },
+            {
+              "name": "investmentSuggestionId",
+              "description": "The unique identifier for the investment suggestion record."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/loan_suggestions/{loanSuggestionId}",
+        "definition": {
+          "entityName": "LoanSuggestion",
+          "schema": {
+            "$ref": "#/backend/entities/LoanSuggestion"
+          },
+          "description": "Stores loan suggestions for a user. `userId` is denormalized, enforcing path-based ownership and enabling Authorization Independence. The `userId` field in the LoanSuggestion document MUST match the `userId` in the path.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user, corresponding to their Firebase Auth UID."
+            },
+            {
+              "name": "loanSuggestionId",
+              "description": "The unique identifier for the loan suggestion record."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/business_strategies/{businessStrategyId}",
+        "definition": {
+          "entityName": "BusinessStrategy",
+          "schema": {
+            "$ref": "#/backend/entities/BusinessStrategy"
+          },
+          "description": "Stores business strategies for a user. `userId` is denormalized, enforcing path-based ownership and enabling Authorization Independence. The `userId` field in the BusinessStrategy document MUST match the `userId` in the path.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user, corresponding to their Firebase Auth UID."
+            },
+            {
+              "name": "businessStrategyId",
+              "description": "The unique identifier for the business strategy record."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/upload_history/{uploadHistoryId}",
+        "definition": {
+          "entityName": "UploadHistory",
+          "schema": {
+            "$ref": "#/backend/entities/UploadHistory"
+          },
+          "description": "Stores a history of file uploads for a user.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user, corresponding to their Firebase Auth UID."
+            },
+            {
+              "name": "uploadHistoryId",
+              "description": "The unique identifier for the upload history record."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to ensure Authorization Independence, DBAC, and support secure list operations (QAPs). User data is stored under `/users/{userId}` for private data ownership. Expenses, Incomes, Budgets, FinancialGoals, InvestmentSuggestions, LoanSuggestions, and BusinessStrategies are stored as subcollections of the user's document, enabling path-based authorization and clear ownership. Each subcollection inherits the user's ID, which eliminates the need for `get()` calls in security rules, thus achieving Authorization Independence. This design allows for secure and scalable data management. The data segregation enforces a homogeneous security posture, simplifying rules, and the explicit path-based ownership clarifies authorization intent. The use of subcollections creates implicit indexing, which makes queries very fast, also queries can be as complex and as deep as needed."
+  }
+}
+    
+    

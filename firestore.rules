@@ -1,0 +1,268 @@
+/**
+ * # Firestore Security Rules
+ *
+ * ## Core Philosophy
+ * This ruleset enforces a strict user-ownership model. All user data is private and can only be
+ * accessed by the authenticated user who owns it. This ensures a high level of privacy and
+ * security by default.
+ *
+ * ## Data Structure
+ * The data is organized hierarchically. A top-level `users` collection holds individual user
+ * profile documents. All other data, such as expenses, incomes, and budgets, are stored in
+ * subcollections under the specific user's document (e.g., `/users/{userId}/expenses/{expenseId}`).
+ * This structure naturally aligns with the ownership-based security model.
+ *
+ * ## Key Security Decisions
+ * - **No Public Data:** All collections and subcollections are private by default.
+ * - **No User Listing:** It is not possible to query the list of all application users.
+ * - **Strict Ownership:** A user can only read or write data within their own document tree.
+ *   There are no shared data or administrative access rules defined.
+ * - **Path-based Security:** Authorization is primarily determined by the `{userId}` wildcard in
+ *   the document path, which must match the authenticated user's UID.
+ *
+ * ## Denormalization for Authorization
+ * To create simpler and more performant rules, this ruleset relies on denormalization.
+ * Specifically, the user's ID (`userId`) is copied into every document within that user's
+ * subcollections (e.g., an Expense document has a `userId` field). This avoids costly `get()`
+ * calls to parent documents and allows rules to validate ownership directly from the document
+ * being accessed, a principle known as Authorization Independence.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // =====================================================================
+    // Helper Functions
+    // =====================================================================
+
+    /**
+     * Checks if the user is authenticated.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /**
+     * Checks if the authenticated user's UID matches the provided userId.
+     * Ensures that a user is operating on their own data.
+     */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+    
+    /**
+     * Checks for ownership on an existing document. Used for update/delete.
+     * Prevents operations on documents that do not exist.
+     */
+    function isExistingOwner(userId) {
+      return isOwner(userId) && resource != null;
+    }
+
+    /**
+     * Validates that the UserProfile document being created contains an 'id'
+     * field that matches the document's path ID (the user's auth UID).
+     * This enforces relational integrity at the point of creation.
+     */
+    function isValidUserProfileCreate(userId) {
+      let data = request.resource.data;
+      return data.id == userId
+          && data.firstName is string && data.firstName.size() > 0
+          && data.lastName is string && data.lastName.size() > 0
+          && data.email is string && data.email.matches('.+@.+\\..+')
+          && data.registrationDate is string;
+    }
+
+    /**
+     * Validates that the 'id' and other core fields of a UserProfile are immutable on update.
+     */
+    function isValidUserProfileUpdate(userId) {
+       let data = request.resource.data;
+       return isOwner(userId)
+          && data.id == resource.data.id
+          && data.email == resource.data.email
+          && data.registrationDate == resource.data.registrationDate
+          && data.firstName is string && data.firstName.size() > 0
+          && data.lastName is string && data.lastName.size() > 0
+          && (data.phone == null || (data.phone is string && data.phone.size() < 20))
+          && (data.dob == null || (data.dob is string && data.dob.matches('^\\d{4}-\\d{2}-\\d{2}$')))
+          && (data.bio == null || (data.bio is string && data.bio.size() < 500))
+          && (data.address == null || (
+              data.address is map
+              && (data.address.street == null || data.address.street is string)
+              && (data.address.city == null || data.address.city is string)
+              && (data.address.state == null || data.address.state is string)
+              && (data.address.zip == null || data.address.zip is string)
+            ));
+    }
+
+    /**
+     * Validates that any subcollection document being created contains a 'userId'
+     * field that matches the user ID from the path. This enforces the
+     * denormalization pattern critical for our security model.
+     */
+    function isValidSubcollectionCreate(userId) {
+      return request.resource.data.userId == userId;
+    }
+    
+    /**
+     * Validates that the 'userId' field of any subcollection document is
+     * immutable on update. This prevents an item from being moved between users.
+     */
+    function isValidSubcollectionUpdate() {
+      return request.resource.data.userId == resource.data.userId;
+    }
+
+    // =====================================================================
+    // User Profiles
+    // =====================================================================
+    
+    /**
+     * @description Manages user profile documents.
+     * @path        /users/{userId}
+     * @allow       (create) A new user can create their own profile document.
+     * @allow       (get, update, delete) An existing user can manage their own profile.
+     * @deny        (get) A user cannot read another user's profile.
+     * @deny        (list) No user can list all user profiles in the database.
+     * @principle   Enforces self-creation and strict ownership of a user's root document.
+     */
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow list: if false;
+      allow create: if isOwner(userId) && isValidUserProfileCreate(userId);
+      allow update: if isExistingOwner(userId) && isValidUserProfileUpdate(userId);
+      allow delete: if isExistingOwner(userId);
+
+      // =====================================================================
+      // User Subcollections
+      // =====================================================================
+
+      /**
+       * @description Secures a user's private expense records.
+       * @path        /users/{userId}/expenses/{expenseId}
+       * @allow       (create, get, list, update, delete) A user can fully manage their own expenses.
+       * @deny        (get) A user cannot read another user's expense.
+       * @deny        (create) A user cannot create an expense for another user.
+       * @principle   Restricts access to a user's own data tree using path-based ownership.
+       */
+      match /expenses/{expenseId} {
+        allow get: if isOwner(userId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidSubcollectionCreate(userId);
+        allow update: if isExistingOwner(userId) && isValidSubcollectionUpdate();
+        allow delete: if isExistingOwner(userId);
+      }
+
+      /**
+       * @description Secures a user's private income records.
+       * @path        /users/{userId}/incomes/{incomeId}
+       * @allow       (create, get, list, update, delete) A user can fully manage their own incomes.
+       * @deny        (get) A user cannot read another user's income.
+       * @deny        (create) A user cannot create an income record for another user.
+       * @principle   Restricts access to a user's own data tree using path-based ownership.
+       */
+      match /incomes/{incomeId} {
+        allow get: if isOwner(userId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidSubcollectionCreate(userId);
+        allow update: if isExistingOwner(userId) && isValidSubcollectionUpdate();
+        allow delete: if isExistingOwner(userId);
+      }
+
+      /**
+       * @description Secures a user's private budget settings.
+       * @path        /users/{userId}/budgets/{budgetId}
+       * @allow       (create, get, list, update, delete) A user can fully manage their own budgets.
+       * @deny        (get) A user cannot read another user's budget.
+       * @deny        (create) A user cannot create a budget for another user.
+       * @principle   Restricts access to a user's own data tree using path-based ownership.
+       */
+      match /budgets/{budgetId} {
+        allow get: if isOwner(userId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidSubcollectionCreate(userId);
+        allow update: if isExistingOwner(userId) && isValidSubcollectionUpdate();
+        allow delete: if isExistingOwner(userId);
+      }
+      
+      /**
+       * @description Secures a user's private financial goals.
+       * @path        /users/{userId}/financial_goals/{financialGoalId}
+       * @allow       (create, get, list, update, delete) A user can fully manage their own financial goals.
+       * @deny        (get) A user cannot read another user's financial goal.
+       * @deny        (create) A user cannot create a financial goal for another user.
+       * @principle   Restricts access to a user's own data tree using path-based ownership.
+       */
+      match /financial_goals/{financialGoalId} {
+        allow get: if isOwner(userId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidSubcollectionCreate(userId);
+        allow update: if isExistingOwner(userId) && isValidSubcollectionUpdate();
+        allow delete: if isExistingOwner(userId);
+      }
+      
+      /**
+       * @description Secures a user's private investment suggestions.
+       * @path        /users/{userId}/investment_suggestions/{investmentSuggestionId}
+       * @allow       (create, get, list, update, delete) A user can fully manage their own suggestions.
+       * @deny        (get) A user cannot read another user's investment suggestion.
+       * @deny        (create) A user cannot create an investment suggestion for another user.
+       * @principle   Restricts access to a user's own data tree using path-based ownership.
+       */
+      match /investment_suggestions/{investmentSuggestionId} {
+        allow get: if isOwner(userId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidSubcollectionCreate(userId);
+        allow update: if isExistingOwner(userId) && isValidSubcollectionUpdate();
+        allow delete: if isExistingOwner(userId);
+      }
+      
+      /**
+       * @description Secures a user's private loan suggestions.
+       * @path        /users/{userId}/loan_suggestions/{loanSuggestionId}
+       * @allow       (create, get, list, update, delete) A user can fully manage their own suggestions.
+       * @deny        (get) A user cannot read another user's loan suggestion.
+       * @deny        (create) A user cannot create a loan suggestion for another user.
+       * @principle   Restricts access to a user's own data tree using path-based ownership.
+       */
+      match /loan_suggestions/{loanSuggestionId} {
+        allow get: if isOwner(userId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidSubcollectionCreate(userId);
+        allow update: if isExistingOwner(userId) && isValidSubcollectionUpdate();
+        allow delete: if isExistingOwner(userId);
+      }
+
+      /**
+       * @description Secures a user's private business strategies.
+       * @path        /users/{userId}/business_strategies/{businessStrategyId}
+       * @allow       (create, get, list, update, delete) A user can fully manage their own strategies.
+       * @deny        (get) A user cannot read another user's business strategy.
+       * @deny        (create) A user cannot create a business strategy for another user.
+       * @principle   Restricts access to a user's own data tree using path-based ownership.
+       */
+      match /business_strategies/{businessStrategyId} {
+        allow get: if isOwner(userId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidSubcollectionCreate(userId);
+        allow update: if isExistingOwner(userId) && isValidSubcollectionUpdate();
+        allow delete: if isExistingOwner(userId);
+      }
+
+      /**
+       * @description Secures a user's private upload history.
+       * @path        /users/{userId}/upload_history/{uploadHistoryId}
+       * @allow       (create, get, list, delete) A user can manage their own upload history.
+       * @deny        (get, list, create, delete) A user cannot access another user's upload history.
+       * @principle   Restricts access to a user's own data tree using path-based ownership.
+       */
+      match /upload_history/{uploadHistoryId} {
+        allow get: if isOwner(userId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidSubcollectionCreate(userId);
+        allow update: if false; // Upload history should be immutable
+        allow delete: if isExistingOwner(userId);
+      }
+    }
+  }
+}
+    

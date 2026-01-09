@@ -1,0 +1,16 @@
+{
+  "placeholderImages": [
+    {
+      "id": "auth-background",
+      "description": "A person working on a laptop with financial charts and graphs on the screen, suggesting data analysis and financial management.",
+      "imageUrl": "https://images.unsplash.com/photo-1628271649231-63851b434a94?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxNXx8ZmluYW5jZSUyMHRlY2hub2xvZ3l8ZW58MHx8fHwxNzY5MzcwNjU1fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "finance technology"
+    },
+    {
+      "id": "dashboard-background",
+      "description": "A clean and modern office setting with a blurred background, suggesting a professional and focused environment.",
+      "imageUrl": "https://images.unsplash.com/photo-1554495574-a4b5b7b6e9c0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8bW9kZXJuJTIwb2ZmaWNlJTIwYmFja2dyb3VuZHxlbnwwfHx8fDE3NjkzNzA3NDB8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "modern office"
+    }
+  ]
+}
